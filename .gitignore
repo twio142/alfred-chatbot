@@ -1,0 +1,4 @@
+*.png
+/prefs.plist
+.claude/
+.gemini/
