@@ -3,7 +3,6 @@
 import { spawn } from 'child_process';
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'fs';
 
-const CLAUDE = '/opt/homebrew/bin/claude';
 
 function env(name) {
   return process.env[name] || '';
@@ -43,20 +42,29 @@ function markdownChat(messages, ignoreLastInterrupted = true) {
   }, '');
 }
 
-function startClaudeStream(model, systemPrompt, sessionId, query, streamFile, pidStreamFile) {
+function buildArgs(provider, model, systemPrompt, session, query) {
+  const args = ['--output-format', 'stream-json'];
+  if (provider === 'gemini') {
+    args.push('--sandbox');
+    // NOTE: gemini's --model arg doesn't work with -p
+    // if (model) args.push('--model', model);
+    if (session) args.push('--resume', 'latest');
+  } else {
+    args.push('--verbose', '--include-partial-messages', '--tools', '');
+    if (model) args.push('--model', model);
+    if (systemPrompt) args.push('--system-prompt', systemPrompt);
+    if (session) args.push('--resume', session.session_id);
+  }
+  args.push('-p', query);
+  return args;
+}
+
+function startStream(provider, model, systemPrompt, session, query, streamFile, pidStreamFile) {
   writeFileSync(streamFile, '', 'utf8');
   const fd = openSync(streamFile, 'w');
 
-  const args = ['-p', '--output-format', 'stream-json', '--verbose', '--include-partial-messages', '--tools', ''];
-  if (model)
-    args.push('--model', model);
-  if (systemPrompt)
-    args.push('--system-prompt', systemPrompt);
-  if (sessionId)
-    args.push('--resume', sessionId);
-  args.push(query);
-
-  const child = spawn(CLAUDE, args, {
+  const args = buildArgs(provider, model, systemPrompt, session, query);
+  const child = spawn(provider === 'gemini' ? 'gemini' : 'claude', args, {
     stdio: ['ignore', fd, 'ignore'],
     detached: true,
   });
@@ -66,7 +74,45 @@ function startClaudeStream(model, systemPrompt, sessionId, query, streamFile, pi
   writeFile(pidStreamFile, String(child.pid));
 }
 
-function readStream(streamFile, chatFile, sessionFile, pidStreamFile, timeoutSeconds) {
+function extractResponse(lines, provider) {
+  if (provider === 'gemini') {
+    const messages = lines.filter(l => l.type === 'message' && l.role === 'assistant');
+    return messages[messages.length - 1]?.content || '';
+  } else {
+    // claude: each assistant message contains the accumulated text so far — take the latest
+    const messages = lines.filter(l => l.type === 'assistant');
+    const latest = messages[messages.length - 1];
+    return latest
+      ? (latest.message?.content || []).filter(c => c.type === 'text').map(c => c.text).join('')
+      : '';
+  }
+}
+
+function extractFinishReason(lines, provider) {
+  const resultLine = lines.find(l => l.type === 'result');
+  if (resultLine) return resultLine[provider === 'gemini' ? 'status' : 'subtype'] === 'error' ? 'error' : 'stop';
+  if (lines.some(l => l.type === 'error')) return 'error';
+  return null;
+}
+
+function extractError(lines) {
+  const errLine = lines.find(l => l.type === 'result' || l.type === 'error');
+  const err = errLine?.error || errLine?.message;
+  if (!err) return 'An error occurred';
+  return typeof err === 'string' ? err : (err.message || JSON.stringify(err));
+}
+
+function saveSession(sessionFile, provider, lines) {
+  if (provider === 'gemini') {
+    const initLine = lines.find(l => l.type === 'init');
+    if (initLine?.session_id) writeFile(sessionFile, JSON.stringify({ provider, session_id: initLine.session_id }));
+  } else {
+    const resultLine = lines.find(l => l.type === 'result');
+    if (resultLine?.session_id) writeFile(sessionFile, JSON.stringify({ provider, session_id: resultLine.session_id }));
+  }
+}
+
+function readStream(provider, streamFile, chatFile, sessionFile, pidStreamFile, timeoutSeconds) {
   const streamMarker = env('stream_marker') === '1';
 
   let streamString = '';
@@ -83,7 +129,6 @@ function readStream(streamFile, chatFile, sessionFile, pidStreamFile, timeoutSec
     });
   }
 
-  // Parse NDJSON
   const lines = streamString
     .split('\n')
     .filter(Boolean)
@@ -95,18 +140,8 @@ function readStream(streamFile, chatFile, sessionFile, pidStreamFile, timeoutSec
       }
     });
 
-  // Each assistant message contains the accumulated text so far — take the latest
-  const assistantMessages = lines.filter(l => l.type === 'assistant');
-  const latestMessage = assistantMessages[assistantMessages.length - 1];
-  const responseText = latestMessage
-    ? (latestMessage.message?.content || [])
-        .filter(c => c.type === 'text')
-        .map(c => c.text)
-        .join('')
-    : '';
-
-  const resultLine = lines.find(l => l.type === 'result');
-  const finishReason = resultLine ? (resultLine.subtype === 'error' ? 'error' : 'stop') : null;
+  const responseText = extractResponse(lines, provider);
+  const finishReason = extractFinishReason(lines, provider);
 
   if (!finishReason) {
     let mtime = 0;
@@ -122,7 +157,7 @@ function readStream(streamFile, chatFile, sessionFile, pidStreamFile, timeoutSec
       deleteFile(pidStreamFile);
       return JSON.stringify({
         response: `${responseText} [Connection Stalled]`,
-        footer: 'You can ask Claude to continue the answer',
+        footer: 'You can ask to continue the answer',
         behaviour: { response: 'replacelast', scroll: 'end' },
       });
     }
@@ -142,25 +177,22 @@ function readStream(streamFile, chatFile, sessionFile, pidStreamFile, timeoutSec
     });
   }
 
-  if (resultLine.subtype === 'error') {
+  if (finishReason === 'error') {
     deleteFile(streamFile);
     deleteFile(pidStreamFile);
     return JSON.stringify({
-      response: resultLine.error || 'An error occurred',
+      response: extractError(lines),
       behaviour: { response: 'replacelast' },
     });
   }
 
-  if (resultLine?.session_id)
-    writeFile(sessionFile, JSON.stringify({ session_id: resultLine.session_id }));
+  saveSession(sessionFile, provider, lines);
   appendChat(chatFile, { role: 'assistant', content: responseText });
   deleteFile(streamFile);
   deleteFile(pidStreamFile);
 
-  const footer = finishReason === 'length' ? 'Maximum number of tokens reached' : undefined;
   return JSON.stringify({
     response: responseText,
-    ...(footer ? { footer } : {}),
     behaviour: { response: 'replacelast', scroll: 'end' },
   });
 }
@@ -169,7 +201,8 @@ function readStream(streamFile, chatFile, sessionFile, pidStreamFile, timeoutSec
   const typedQuery = process.argv[2] || '';
   const timeoutSeconds = Number.parseInt(env('timeout_seconds')) || 10;
   const systemPrompt = env('system_prompt');
-  const model = env('claude_model');
+  const provider = env('provider') || 'claude';
+  const model = provider === 'gemini' ? env('gemini_model') : env('claude_model');
   const dataDir = env('alfred_workflow_data');
   const cacheDir = env('alfred_workflow_cache');
   const chatFile = `${dataDir}/chat.json`;
@@ -179,7 +212,7 @@ function readStream(streamFile, chatFile, sessionFile, pidStreamFile, timeoutSec
   const streamingNow = env('streaming_now') === '1';
 
   if (streamingNow) {
-    process.stdout.write(readStream(streamFile, chatFile, sessionFile, pidStreamFile, timeoutSeconds));
+    process.stdout.write(readStream(provider, streamFile, chatFile, sessionFile, pidStreamFile, timeoutSeconds));
     return;
   }
 
@@ -193,7 +226,7 @@ function readStream(streamFile, chatFile, sessionFile, pidStreamFile, timeoutSec
     writeFile(chatFile, '[]');
   }
 
-  // If stream file exists, check whether a live claude process is still writing to it
+  // If stream file exists, check whether a live process is still writing to it
   if (existsSync(streamFile)) {
     const pidAlive = (() => {
       try {
@@ -226,16 +259,19 @@ function readStream(streamFile, chatFile, sessionFile, pidStreamFile, timeoutSec
     return;
   }
 
-  let sessionId = null;
+  // Load session only if it's from the same provider
+  let session = null;
   try {
-    if (existsSync(sessionFile))
-      sessionId = JSON.parse(readFileSync(sessionFile, 'utf8')).session_id;
+    if (existsSync(sessionFile)) {
+      const saved = JSON.parse(readFileSync(sessionFile, 'utf8'));
+      if (saved.provider === provider) session = saved;
+    }
   } catch {}
 
   const appendQuery = { role: 'user', content: typedQuery };
   const ongoingChat = previousChat.concat(appendQuery);
 
-  startClaudeStream(model, systemPrompt, sessionId, typedQuery, streamFile, pidStreamFile);
+  startStream(provider, model, systemPrompt, session, typedQuery, streamFile, pidStreamFile);
   appendChat(chatFile, appendQuery);
 
   process.stdout.write(JSON.stringify({
