@@ -3,11 +3,35 @@
 import { spawn } from 'child_process';
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'fs';
 
+// --- Utilities ---
+
+function parseArgs(str) {
+  const args = [];
+  let current = '';
+  let inSingle = false;
+  let inDouble = false;
+
+  for (const ch of str) {
+    if (ch === "'" && !inDouble) {
+      inSingle = !inSingle;
+    } else if (ch === '"' && !inSingle) {
+      inDouble = !inDouble;
+    } else if (ch === ' ' && !inSingle && !inDouble) {
+      if (current) { args.push(current); current = ''; }
+    } else {
+      current += ch;
+    }
+  }
+  if (current) args.push(current);
+  return args;
+}
+
 // --- Provider Implementations ---
 
 class BaseProvider {
-  constructor(model) {
+  constructor(model, extraArgs = []) {
     this.model = model;
+    this.extraArgs = extraArgs;
   }
 }
 
@@ -21,6 +45,7 @@ class GeminiProvider extends BaseProvider {
       args.push('--model', this.model);
     if (session)
       args.push('--resume', session.session_id);
+    args.push(...this.extraArgs);
     return args;
   }
 
@@ -51,6 +76,7 @@ class ClaudeProvider extends BaseProvider {
       args.push('--resume', session.session_id);
     if (systemPromptFile)
       args.push('--system-prompt-file', systemPromptFile);
+    args.push(...this.extraArgs);
     return args;
   }
 
@@ -257,11 +283,10 @@ class Chatbot {
 
 const env = n => process.env[n] || '';
 const providerName = env('provider') || 'claude';
-const model = providerName === 'gemini' ? env('gemini_model') : env('claude_model');
 
 const provider = providerName === 'gemini'
-  ? new GeminiProvider(model)
-  : new ClaudeProvider(model);
+  ? new GeminiProvider(env('gemini_model'), parseArgs(env('gemini_options')))
+  : new ClaudeProvider(env('claude_model'), parseArgs(env('claude_options')));
 
 const config = {
   dataDir: env('alfred_workflow_data'),
