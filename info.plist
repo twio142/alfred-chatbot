@@ -1324,7 +1324,7 @@ View Chat History with ⌥↩ from the chat keyword. Each chat shows the first q
 		<string>1</string>
 	</dict>
 	<key>version</key>
-	<string>25.2</string>
+	<string>2.0.0</string>
 	<key>webaddress</key>
 	<string></string>
 </dict>
