@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
-import { spawn } from 'child_process';
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'fs';
+import { spawn, spawnSync } from 'child_process';
+import { closeSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'fs';
+import { basename } from 'path';
 
 // --- Utilities ---
 
@@ -12,17 +13,20 @@ function parseArgs(str) {
   let inDouble = false;
 
   for (const ch of str) {
-    if (ch === "'" && !inDouble) {
+    if (ch === '\'' && !inDouble) {
       inSingle = !inSingle;
     } else if (ch === '"' && !inSingle) {
       inDouble = !inDouble;
     } else if (ch === ' ' && !inSingle && !inDouble) {
-      if (current) { args.push(current); current = ''; }
+      if (current) {
+        args.push(current); current = '';
+      }
     } else {
       current += ch;
     }
   }
-  if (current) args.push(current);
+  if (current)
+    args.push(current);
   return args;
 }
 
@@ -37,10 +41,25 @@ class BaseProvider {
 
 class GeminiProvider extends BaseProvider {
   name = 'gemini';
-  sessionKey = 'init';
+
+  get sessionDir() {
+    return `${process.env.HOME}/.gemini/tmp/${basename(process.cwd()).replace(/[^a-z0-9]/gi, '-').toLowerCase()}/chats`;
+  }
+
+  findSessionFile(sessionId) {
+    if (!existsSync(this.sessionDir))
+      return null;
+    const prefix = sessionId.slice(0, 8);
+    const match = readdirSync(this.sessionDir).find(f => f.endsWith(`-${prefix}.json`));
+    return match ? `${this.sessionDir}/${match}` : null;
+  }
+
+  findSessionLine(lines) {
+    return lines.find(l => l.type === 'init' && l.session_id);
+  }
 
   buildArgs(query, session) {
-    const args = ['--output-format', 'stream-json', '-p', query, '--sandbox'];
+    const args = ['--output-format', 'stream-json', '-p', query];
     if (this.model)
       args.push('--model', this.model);
     if (session)
@@ -48,6 +67,8 @@ class GeminiProvider extends BaseProvider {
     args.push(...this.extraArgs);
     return args;
   }
+
+  buildEnv = systemPromptFile => ({ ...process.env, GEMINI_SYSTEM_MD: systemPromptFile ? '1' : undefined });
 
   extractResponse(lines) {
     return lines
@@ -66,7 +87,19 @@ class GeminiProvider extends BaseProvider {
 
 class ClaudeProvider extends BaseProvider {
   name = 'claude';
-  sessionKey = 'result';
+
+  get sessionDir() {
+    return `${process.env.HOME}/.claude/projects/${process.cwd().replace(/[^a-z0-9]/gi, '-')}`;
+  }
+
+  findSessionFile(sessionId) {
+    const p = `${this.sessionDir}/${sessionId}.jsonl`;
+    return existsSync(p) ? p : null;
+  }
+
+  findSessionLine(lines) {
+    return lines.find(l => l.type === 'system' && l.subtype === 'init' && l.session_id);
+  }
 
   buildArgs(query, session, systemPromptFile) {
     const args = ['--output-format', 'stream-json', '-p', query, '--verbose', '--include-partial-messages'];
@@ -80,9 +113,11 @@ class ClaudeProvider extends BaseProvider {
     return args;
   }
 
+  buildEnv = () => process.env;
+
   extractResponse(lines) {
     const assistantLines = lines.filter(l => l.type === 'assistant');
-    const latest = assistantLines[assistantLines.length - 1];
+    const latest = assistantLines.at(-1);
     return latest?.message?.content?.filter(c => c.type === 'text').map(c => c.text).join('') || '';
   }
 
@@ -107,6 +142,7 @@ class Chatbot {
       stream: `${config.cacheDir}/stream.txt`,
       systemPrompt: '.gemini/system.md',
     };
+    this.systemFile = config.systemPrompt ? this.paths.systemPrompt : null;
   }
 
   setup() {
@@ -145,7 +181,7 @@ class Chatbot {
   }
 
   saveSessionFromLines(lines) {
-    const match = lines.find(l => l.type === this.provider.sessionKey && l.session_id);
+    const match = this.provider.findSessionLine(lines);
     if (match) {
       writeFileSync(this.paths.session, JSON.stringify({
         provider: this.provider.name,
@@ -168,25 +204,100 @@ class Chatbot {
     }
   }
 
+  resetChat() {
+    this.archiveChat();
+    writeFileSync(this.paths.chat, '[]');
+    this.deleteFile(this.paths.session);
+  }
+
+  archiveChat() {
+    let session;
+    try {
+      session = JSON.parse(readFileSync(this.paths.session, 'utf8'));
+    } catch {
+      return;
+    }
+    if (!session?.provider || !session?.session_id)
+      return;
+    if (!existsSync(this.paths.chat))
+      return;
+    mkdirSync(this.config.archiveDir, { recursive: true });
+    const dest = `${this.config.archiveDir}/${session.provider}_${session.session_id}.json`;
+    writeFileSync(dest, readFileSync(this.paths.chat));
+  }
+
+  formatContextPrompt(messages) {
+    const body = messages.map(m =>
+      `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`,
+    ).join('\n\n');
+    return `The following is a record of a previous conversation. Read it as context and wait for my next message:\n\n${body}`;
+  }
+
+  runBlocking(args, env) {
+    const result = spawnSync(this.provider.name, args, { env, encoding: 'utf8' });
+    return (result.stdout || '').split('\n').filter(Boolean).flatMap((l) => {
+      const start = l.indexOf('{');
+      if (start === -1) return [];
+      try {
+        return [JSON.parse(l.slice(start))];
+      } catch {
+        return [];
+      }
+    });
+  }
+
+  restoreSession(archivePath) {
+    this.archiveChat();
+    const base = basename(archivePath, '.json');
+    const sep = base.indexOf('_');
+    const archiveProvider = base.slice(0, sep);
+    const sessionId = base.slice(sep + 1);
+    let archiveMessages = [];
+    try { archiveMessages = JSON.parse(readFileSync(archivePath, 'utf8')); } catch {}
+    this.saveHistory(archiveMessages);
+    this.deleteFile(archivePath);
+
+    const canResume = archiveProvider === this.provider.name && this.provider.findSessionFile(sessionId);
+    if (canResume) {
+      writeFileSync(this.paths.session, JSON.stringify({ provider: archiveProvider, session_id: sessionId }));
+    } else {
+      const contextPrompt = this.formatContextPrompt(archiveMessages);
+      const args = this.provider.buildArgs(contextPrompt, null, this.systemFile);
+      const env = this.provider.buildEnv(this.systemFile);
+      const lines = this.runBlocking(args, env);
+      const match = this.provider.findSessionLine(lines);
+      if (match)
+        writeFileSync(this.paths.session, JSON.stringify({ provider: this.provider.name, session_id: match.session_id }));
+      else
+        this.deleteFile(this.paths.session);
+    }
+
+    return {
+      variables: { replace_with_chat: '' },
+      response: this.renderMarkdown(archiveMessages, false),
+      behaviour: { scroll: 'end' },
+    };
+  }
+
   start(query) {
     this.setup();
     const session = this.getSession();
-    const systemFile = this.config.systemPrompt ? this.paths.systemPrompt : null;
-    const args = this.provider.buildArgs(query, session, systemFile);
+    const args = this.provider.buildArgs(query, session, this.systemFile);
+    const env = this.provider.buildEnv(this.systemFile);
 
     writeFileSync(this.paths.stream, '', 'utf8');
     const fd = openSync(this.paths.stream, 'w');
-    const child = spawn(this.provider.name, args, { stdio: ['ignore', fd, 'ignore'], detached: true });
+    const child = spawn(this.provider.name, args, { stdio: ['ignore', fd, 'ignore'], detached: true, env });
 
     child.unref();
     closeSync(fd);
     writeFileSync(this.paths.pid, String(child.pid));
 
-    const history = this.getHistory().concat({ role: 'user', content: query });
+    const history = [...this.getHistory(), { role: 'user', content: query }];
     this.saveHistory(history);
 
     return {
-      rerun: 0.1,
+      rerun: 0.5,
       variables: { streaming_now: true, stream_marker: true },
       response: this.renderMarkdown(history),
     };
@@ -199,12 +310,14 @@ class Chatbot {
     } catch {}
 
     if (this.config.streamMarker) {
-      return { rerun: 0.1, variables: { streaming_now: true }, response: '…', behaviour: { response: 'append' } };
+      return { rerun: 0.5, variables: { streaming_now: true }, response: '…', behaviour: { response: 'append' } };
     }
 
     const lines = streamString.split('\n').filter(Boolean).flatMap((l) => {
+      const start = l.indexOf('{');
+      if (start === -1) return [];
       try {
-        return [JSON.parse(l)];
+        return [JSON.parse(l.slice(start))];
       } catch {
         return [];
       }
@@ -230,7 +343,7 @@ class Chatbot {
 
     if (stalled) {
       if (responseText) {
-        const history = this.getHistory().concat({ role: 'assistant', content: responseText });
+        const history = [...this.getHistory(), { role: 'assistant', content: responseText }];
         this.saveHistory(history);
       }
       this.cleanup();
@@ -238,8 +351,8 @@ class Chatbot {
     }
 
     if (!streamString)
-      return { rerun: 0.1, variables: { streaming_now: true } };
-    return { rerun: 0.1, variables: { streaming_now: true }, response: responseText, behaviour: { response: 'replacelast', scroll: 'end' } };
+      return { rerun: 0.5, variables: { streaming_now: true } };
+    return { rerun: 0.5, variables: { streaming_now: true }, response: responseText, behaviour: { response: 'replacelast', scroll: 'end' } };
   }
 
   handleError(lines) {
@@ -251,7 +364,7 @@ class Chatbot {
 
   handleSuccess(lines, responseText) {
     this.saveSessionFromLines(lines);
-    const history = this.getHistory().concat({ role: 'assistant', content: responseText });
+    const history = [...this.getHistory(), { role: 'assistant', content: responseText }];
     this.saveHistory(history);
     this.cleanup();
     return { response: responseText, behaviour: { response: 'replacelast', scroll: 'end' } };
@@ -282,7 +395,7 @@ class Chatbot {
 // --- Bootstrap ---
 
 const env = n => process.env[n] || '';
-const providerName = env('provider') || 'claude';
+const providerName = env('provider');
 
 const provider = providerName === 'gemini'
   ? new GeminiProvider(env('gemini_model'), parseArgs(env('gemini_options')))
@@ -291,21 +404,38 @@ const provider = providerName === 'gemini'
 const config = {
   dataDir: env('alfred_workflow_data'),
   cacheDir: env('alfred_workflow_cache'),
+  archiveDir: `${env('alfred_workflow_data')}/archive`,
   timeoutSeconds: Number.parseInt(env('timeout_seconds')) || 10,
   systemPrompt: env('system_prompt'),
   streamingNow: env('streaming_now') === '1',
   streamMarker: env('stream_marker') === '1',
+  replaceWithChat: env('replace_with_chat'),
+  newChat: env('new_chat') === '1',
+  newChatAfterMinutes: Number.parseInt(env('new_chat_after_minutes')) || 0,
 };
 
 const bot = new Chatbot(provider, config);
 const query = process.argv[2] || '';
+
+if (!config.streamingNow && !bot.isStreaming()) {
+  if (config.newChat) {
+    bot.resetChat();
+  } else if (bot.getSession() && config.newChatAfterMinutes) {
+    let mtime = 0;
+    try {
+      mtime = statSync(bot.paths.chat).mtimeMs;
+    } catch {}
+    if (Date.now() - mtime > config.newChatAfterMinutes * 60 * 1000)
+      bot.resetChat();
+  }
+}
 
 if (config.streamingNow) {
   process.stdout.write(JSON.stringify(bot.poll()));
 } else if (bot.isStreaming()) {
   if (bot.isProcessAlive()) {
     process.stdout.write(JSON.stringify({
-      rerun: 0.1,
+      rerun: 0.5,
       variables: { streaming_now: true, stream_marker: true },
       response: bot.renderMarkdown(bot.getHistory(), true),
       behaviour: { scroll: 'end' },
@@ -321,6 +451,8 @@ if (config.streamingNow) {
       }));
     }
   }
+} else if (config.replaceWithChat) {
+  process.stdout.write(JSON.stringify(bot.restoreSession(config.replaceWithChat)));
 } else if (!query) {
   process.stdout.write(JSON.stringify({
     response: bot.renderMarkdown(bot.getHistory(), false),
