@@ -237,7 +237,8 @@ class Chatbot {
     const result = spawnSync(this.provider.name, args, { env, encoding: 'utf8' });
     return (result.stdout || '').split('\n').filter(Boolean).flatMap((l) => {
       const start = l.indexOf('{');
-      if (start === -1) return [];
+      if (start === -1)
+        return [];
       try {
         return [JSON.parse(l.slice(start))];
       } catch {
@@ -246,14 +247,16 @@ class Chatbot {
     });
   }
 
-  restoreSession(archivePath) {
+  restoreSession(archivePath, query) {
     this.archiveChat();
     const base = basename(archivePath, '.json');
     const sep = base.indexOf('_');
     const archiveProvider = base.slice(0, sep);
-    const sessionId = base.slice(sep + 1);
+    let sessionId = base.slice(sep + 1);
     let archiveMessages = [];
-    try { archiveMessages = JSON.parse(readFileSync(archivePath, 'utf8')); } catch {}
+    try {
+      archiveMessages = JSON.parse(readFileSync(archivePath, 'utf8'));
+    } catch {}
     this.saveHistory(archiveMessages);
     this.deleteFile(archivePath);
 
@@ -266,10 +269,17 @@ class Chatbot {
       const env = this.provider.buildEnv(this.systemFile);
       const lines = this.runBlocking(args, env);
       const match = this.provider.findSessionLine(lines);
-      if (match)
-        writeFileSync(this.paths.session, JSON.stringify({ provider: this.provider.name, session_id: match.session_id }));
-      else
-        this.deleteFile(this.paths.session);
+      if (match) {
+        sessionId = match.session_id;
+        writeFileSync(this.paths.session, JSON.stringify({ provider: this.provider.name, session_id: sessionId }));
+      } else {
+        return { response: 'Failed to restore session: No session ID found in provider response', behaviour: { response: 'replacelast' } };
+      }
+    }
+
+    if (query) {
+      this.saveHistory([...archiveMessages, { role: 'user', content: query }]);
+      return this.start(query);
     }
 
     return {
@@ -315,7 +325,8 @@ class Chatbot {
 
     const lines = streamString.split('\n').filter(Boolean).flatMap((l) => {
       const start = l.indexOf('{');
-      if (start === -1) return [];
+      if (start === -1)
+        return [];
       try {
         return [JSON.parse(l.slice(start))];
       } catch {
@@ -415,7 +426,7 @@ const config = {
 };
 
 const bot = new Chatbot(provider, config);
-const query = process.argv[2] || '';
+const query = (process.argv[2] || '').trim();
 
 if (!config.streamingNow && !bot.isStreaming()) {
   if (config.newChat) {
@@ -452,7 +463,7 @@ if (config.streamingNow) {
     }
   }
 } else if (config.replaceWithChat) {
-  process.stdout.write(JSON.stringify(bot.restoreSession(config.replaceWithChat)));
+  process.stdout.write(JSON.stringify(bot.restoreSession(config.replaceWithChat, query)));
 } else if (!query) {
   process.stdout.write(JSON.stringify({
     response: bot.renderMarkdown(bot.getHistory(), false),

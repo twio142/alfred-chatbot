@@ -47,24 +47,11 @@
 				<false/>
 			</dict>
 		</array>
-		<key>19467065-1FA8-4C92-9F58-797A122BE296</key>
-		<array>
-			<dict>
-				<key>destinationuid</key>
-				<string>4DB440D5-3814-4C79-9724-D19FDDDA4BEC</string>
-				<key>modifiers</key>
-				<integer>0</integer>
-				<key>modifiersubtext</key>
-				<string></string>
-				<key>vitoclose</key>
-				<false/>
-			</dict>
-		</array>
 		<key>28D73131-7F36-436C-9FA6-988E108F7422</key>
 		<array>
 			<dict>
 				<key>destinationuid</key>
-				<string>3F877D5C-BA2B-4BA1-9601-2CE9D29C31B5</string>
+				<string>4DB440D5-3814-4C79-9724-D19FDDDA4BEC</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -91,19 +78,6 @@
 			<dict>
 				<key>destinationuid</key>
 				<string>BA834298-7386-4B4C-9E7D-E2D8542518B0</string>
-				<key>modifiers</key>
-				<integer>0</integer>
-				<key>modifiersubtext</key>
-				<string></string>
-				<key>vitoclose</key>
-				<false/>
-			</dict>
-		</array>
-		<key>3F877D5C-BA2B-4BA1-9601-2CE9D29C31B5</key>
-		<array>
-			<dict>
-				<key>destinationuid</key>
-				<string>19467065-1FA8-4C92-9F58-797A122BE296</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -209,7 +183,7 @@
 				<key>modifiers</key>
 				<integer>262144</integer>
 				<key>modifiersubtext</key>
-				<string></string>
+				<string>Delete chat</string>
 				<key>vitoclose</key>
 				<false/>
 			</dict>
@@ -240,11 +214,24 @@
 				<false/>
 			</dict>
 		</array>
+		<key>BE2A3D59-BE8C-4EF1-905F-524479F181FA</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>B2F04B2C-63AD-4A6D-9A81-7F333D0A075A</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
 		<key>BF340515-39CD-47C9-965D-B1631A3BF45F</key>
 		<array>
 			<dict>
 				<key>destinationuid</key>
-				<string>19467065-1FA8-4C92-9F58-797A122BE296</string>
+				<string>4DB440D5-3814-4C79-9724-D19FDDDA4BEC</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -254,7 +241,7 @@
 			</dict>
 			<dict>
 				<key>destinationuid</key>
-				<string>B2F04B2C-63AD-4A6D-9A81-7F333D0A075A</string>
+				<string>BE2A3D59-BE8C-4EF1-905F-524479F181FA</string>
 				<key>modifiers</key>
 				<integer>524288</integer>
 				<key>modifiersubtext</key>
@@ -313,7 +300,7 @@
 			</dict>
 			<dict>
 				<key>destinationuid</key>
-				<string>19467065-1FA8-4C92-9F58-797A122BE296</string>
+				<string>4DB440D5-3814-4C79-9724-D19FDDDA4BEC</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -333,27 +320,6 @@
 	<string>Chatbot</string>
 	<key>objects</key>
 	<array>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>acceptsfiles</key>
-				<false/>
-				<key>acceptsmulti</key>
-				<integer>0</integer>
-				<key>acceptstext</key>
-				<true/>
-				<key>acceptsurls</key>
-				<false/>
-				<key>name</key>
-				<string>Ask Chatbot</string>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.trigger.universalaction</string>
-			<key>uid</key>
-			<string>CBBF8BED-C42D-4793-8FEA-EA80FC94C493</string>
-			<key>version</key>
-			<integer>1</integer>
-		</dict>
 		<dict>
 			<key>config</key>
 			<dict>
@@ -404,22 +370,21 @@ kill "${pid_stream}"
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>argument</key>
-				<string></string>
-				<key>passthroughargument</key>
+				<key>acceptsfiles</key>
 				<false/>
-				<key>variables</key>
-				<dict>
-					<key>new_chat</key>
-					<string>1</string>
-					<key>pre_init</key>
-					<string>{query}</string>
-				</dict>
+				<key>acceptsmulti</key>
+				<integer>0</integer>
+				<key>acceptstext</key>
+				<true/>
+				<key>acceptsurls</key>
+				<false/>
+				<key>name</key>
+				<string>Ask Chatbot</string>
 			</dict>
 			<key>type</key>
-			<string>alfred.workflow.utility.argument</string>
+			<string>alfred.workflow.trigger.universalaction</string>
 			<key>uid</key>
-			<string>05B69E0A-58C2-4767-A690-8FA9BECECB57</string>
+			<string>CBBF8BED-C42D-4793-8FEA-EA80FC94C493</string>
 			<key>version</key>
 			<integer>1</integer>
 		</dict>
@@ -448,7 +413,47 @@ kill "${pid_stream}"
 			<key>config</key>
 			<dict>
 				<key>argument</key>
-				<string>{var:init_question}</string>
+				<string></string>
+				<key>passthroughargument</key>
+				<false/>
+				<key>variables</key>
+				<dict>
+					<key>context</key>
+					<string>{query}</string>
+					<key>new_chat</key>
+					<string>1</string>
+				</dict>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.utility.argument</string>
+			<key>uid</key>
+			<string>05B69E0A-58C2-4767-A690-8FA9BECECB57</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argument</key>
+				<string>{query}
+{var:context}</string>
+				<key>passthroughargument</key>
+				<false/>
+				<key>variables</key>
+				<dict/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.utility.argument</string>
+			<key>uid</key>
+			<string>28D73131-7F36-436C-9FA6-988E108F7422</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argument</key>
+				<string>{var:prompt}</string>
 				<key>passthroughargument</key>
 				<false/>
 				<key>variables</key>
@@ -468,46 +473,15 @@ kill "${pid_stream}"
 			<key>config</key>
 			<dict>
 				<key>argument</key>
-				<string>{query}
-{var:pre_init}</string>
-				<key>passthroughargument</key>
-				<false/>
-				<key>variables</key>
-				<dict/>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.utility.argument</string>
-			<key>uid</key>
-			<string>28D73131-7F36-436C-9FA6-988E108F7422</string>
-			<key>version</key>
-			<integer>1</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>type</key>
-				<integer>0</integer>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.utility.transform</string>
-			<key>uid</key>
-			<string>3F877D5C-BA2B-4BA1-9601-2CE9D29C31B5</string>
-			<key>version</key>
-			<integer>1</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>argument</key>
 				<string></string>
 				<key>passthroughargument</key>
 				<false/>
 				<key>variables</key>
 				<dict>
-					<key>init_question</key>
-					<string>{query}</string>
 					<key>new_chat</key>
 					<string>1</string>
+					<key>prompt</key>
+					<string>{query}</string>
 				</dict>
 			</dict>
 			<key>type</key>
@@ -526,10 +500,10 @@ kill "${pid_stream}"
 				<false/>
 				<key>variables</key>
 				<dict>
+					<key>context</key>
+					<string>{query}</string>
 					<key>new_chat</key>
 					<string>0</string>
-					<key>pre_init</key>
-					<string>{query}</string>
 				</dict>
 			</dict>
 			<key>type</key>
@@ -547,30 +521,13 @@ kill "${pid_stream}"
 				<key>escaping</key>
 				<integer>68</integer>
 				<key>script</key>
-				<string>// Helpers
-function envVar(varName) {
-  return $.NSProcessInfo
-    .processInfo
-    .environment
-    .objectForKey(varName).js
-}
-
-function readChat(path) {
-  const chatString = $.NSString.stringWithContentsOfFileEncodingError(path, $.NSUTF8StringEncoding, undefined).js
-  return JSON.parse(chatString)
-}
-
-// Main
-function run() {
-  const chatFile = `${envVar("alfred_workflow_data")}/chat.json`
-  return readChat(chatFile).findLast(message =&gt; message["role"] === "assistant")["content"]
-}</string>
+				<string>jq -r '[.[] | select(.role == "assistant")] | last | .content' $alfred_workflow_data/chat.json</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
 				<string></string>
 				<key>type</key>
-				<integer>7</integer>
+				<integer>11</integer>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.action.script</string>
@@ -591,25 +548,6 @@ function run() {
 			<string>DA9FB2AC-0A0A-463D-B07A-B25CD699C24C</string>
 			<key>version</key>
 			<integer>1</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>autopaste</key>
-				<false/>
-				<key>clipboardtext</key>
-				<string>{query}</string>
-				<key>ignoredynamicplaceholders</key>
-				<false/>
-				<key>transient</key>
-				<false/>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.output.clipboard</string>
-			<key>uid</key>
-			<string>7CE25BF5-0AF8-411E-8A05-244BF7CA878F</string>
-			<key>version</key>
-			<integer>3</integer>
 		</dict>
 		<dict>
 			<key>config</key>
@@ -652,6 +590,25 @@ function run() {
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>autopaste</key>
+				<false/>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>ignoredynamicplaceholders</key>
+				<false/>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>7CE25BF5-0AF8-411E-8A05-244BF7CA878F</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
 				<key>argument</key>
 				<string>{query}</string>
 				<key>passthroughargument</key>
@@ -666,31 +623,6 @@ function run() {
 			<string>alfred.workflow.utility.argument</string>
 			<key>uid</key>
 			<string>B62AE72B-1954-43B4-A0B7-61B6D4B137B4</string>
-			<key>version</key>
-			<integer>1</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>argument</key>
-				<string></string>
-				<key>passthroughargument</key>
-				<true/>
-				<key>variables</key>
-				<dict>
-					<key>init_question</key>
-					<string>{query}</string>
-				</dict>
-			</dict>
-			<key>inboundconfig</key>
-			<dict>
-				<key>externalid</key>
-				<string>continue_chat</string>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.utility.argument</string>
-			<key>uid</key>
-			<string>19467065-1FA8-4C92-9F58-797A122BE296</string>
 			<key>version</key>
 			<integer>1</integer>
 		</dict>
@@ -715,51 +647,13 @@ function run() {
 				<key>escaping</key>
 				<integer>68</integer>
 				<key>script</key>
-				<string>// Helpers
-function envVar(varName) {
-  return $.NSProcessInfo
-    .processInfo
-    .environment
-    .objectForKey(varName).js
-}
-
-
-function readChat(path) {
-  const chatString = $.NSString.stringWithContentsOfFileEncodingError(path, $.NSUTF8StringEncoding, undefined).js
-  return JSON.parse(chatString)
-}
-
-function markdownChat(messages, ignoreLastInterrupted = true) {
-  return messages.reduce((accumulator, current, index, allMessages) =&gt; {
-    if (current["role"] === "assistant")
-      return `${accumulator}${current["content"]}\n\n`
-
-    if (current["role"] === "user") {
-      const userMessage = `## You\n\n${current["content"]}\n\n## Assistant`
-      const userTwice = allMessages[index + 1]?.["role"] === "user" // "user" role twice in a row
-      const lastMessage = index === allMessages.length - 1 // "user is last message
-
-      return userTwice || (lastMessage &amp;&amp; !ignoreLastInterrupted) ?
-        `${accumulator}${userMessage}\n\n[Answer Interrupted]\n\n` :
-        `${accumulator}${userMessage}\n\n`
-    }
-
-    // Ignore any other role
-    return accumulator
-  }, "")
-}
-
-// Main
-function run() {
-  const chatFile = `${envVar("alfred_workflow_data")}/chat.json`
-  return markdownChat(readChat(chatFile), false)
-}</string>
+				<string>jq -r 'map("## \(if .role == "user" then "You" else "Assistant" end)\n\n\(.content)") | join("\n\n")' $alfred_workflow_data/chat.json</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
 				<string></string>
 				<key>type</key>
-				<integer>7</integer>
+				<integer>11</integer>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.action.script</string>
@@ -796,14 +690,24 @@ function run() {
 				<key>runningsubtext</key>
 				<string></string>
 				<key>script</key>
-				<string>find "$alfred_workflow_data/chat.json" -mmin -${new_chat_after_minutes} | grep -q . &amp;&amp; subtitle=Continue
+				<string>mkdir -p $alfred_workflow_data/archive
+
+expired=$(find "$alfred_workflow_data/chat.json" -mmin +${new_chat_after_minutes})
+session="$alfred_workflow_data/session.json"
+[[ -f "$expired" &amp;&amp; -f "$session" ]] &amp;&amp; {
+	name=$(jq -r '"\(.provider)_\(.session_id)"' $session)
+	mv $expired $alfred_workflow_data/archive/$name.json
+	rm $session
+}
+
+[ -f "$alfred_workflow_data/chat.json" ] &amp;&amp; subtitle=Continue
 
 jq -n --arg arg "$1" --arg subtitle "$subtitle" '{ items: [{
 	title: "Ask Chatbot", subtitle: $subtitle, arg: $arg,
 	mods: {
 		cmd: {subtitle: "New chat", arg: $arg, variables: { new_chat: 1 }},
 		alt: {subtitle: "Resume a chat", arg: $arg}
-	}
+	},
 }]}'</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
@@ -827,6 +731,74 @@ jq -n --arg arg "$1" --arg subtitle "$subtitle" '{ items: [{
 			<string>alfred.workflow.input.scriptfilter</string>
 			<key>uid</key>
 			<string>BF340515-39CD-47C9-965D-B1631A3BF45F</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>alfredfiltersresults</key>
+				<true/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttreatemptyqueryasnil</key>
+				<true/>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>1</integer>
+				<key>escaping</key>
+				<integer>68</integer>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<true/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string>Loading…</string>
+				<key>script</key>
+				<string>mkdir -p "$alfred_workflow_data/archive"
+find "$alfred_workflow_data/archive" -type f -name "*.json" | grep -q . || {
+    jq -n '{ items: [{ title: "No Chat Histories Found", valid: false }]}'
+    exit 0
+}
+
+# sort chats by modified date, most recent first
+ls -t "$alfred_workflow_data/archive"/*.json 2&gt;/dev/null | while read -r file; do
+    first_question=$(jq -r 'map(select(.role == "user"))[0].content // empty' "$file")
+    last_question=$(jq -r 'map(select(.role == "user"))[-1].content // empty' "$file")
+
+    # Delete invalid chats
+    if [[ -z "$first_question" ]]; then
+        rm "$file"
+        continue
+    fi
+
+    jq -n --arg title "$first_question" --arg subtitle "$last_question" --arg arg "$prompt" --arg file "$file" \
+        '{ title: $title, subtitle: $subtitle, arg: $arg, match: "\($title) \($subtitle)", quicklookurl: $file, variables: { replace_with_chat: $file }, action: { file: $file } }'
+done | jq -s '{ items: . }'</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>skipuniversalaction</key>
+				<true/>
+				<key>subtext</key>
+				<string></string>
+				<key>title</key>
+				<string>Chat History</string>
+				<key>type</key>
+				<integer>11</integer>
+				<key>withspace</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>B2F04B2C-63AD-4A6D-9A81-7F333D0A075A</string>
 			<key>version</key>
 			<integer>3</integer>
 		</dict>
@@ -865,109 +837,22 @@ run = (args) =&gt; {
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>alfredfiltersresults</key>
-				<true/>
-				<key>alfredfiltersresultsmatchmode</key>
-				<integer>0</integer>
-				<key>argumenttreatemptyqueryasnil</key>
-				<true/>
-				<key>argumenttrimmode</key>
-				<integer>0</integer>
-				<key>argumenttype</key>
-				<integer>1</integer>
-				<key>escaping</key>
-				<integer>68</integer>
-				<key>queuedelaycustom</key>
-				<integer>3</integer>
-				<key>queuedelayimmediatelyinitially</key>
-				<true/>
-				<key>queuedelaymode</key>
-				<integer>0</integer>
-				<key>queuemode</key>
-				<integer>1</integer>
-				<key>runningsubtext</key>
-				<string>Loading…</string>
-				<key>script</key>
-				<string>function envVar(varName) {
-  return $.NSProcessInfo
-    .processInfo
-    .environment
-    .objectForKey(varName).js
-}
-
-function dirContents(path) {
-  return $.NSFileManager.defaultManager.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptionsError(
-    $.NSURL.fileURLWithPath(path), undefined, $.NSDirectoryEnumerationSkipsHiddenFiles, undefined)
-    .js.map(p =&gt; p.path.js).sort()
-}
-
-function readChat(path) {
-  const chatString = $.NSString.stringWithContentsOfFileEncodingError(path, $.NSUTF8StringEncoding, undefined).js
-  return JSON.parse(chatString)
-}
-
-function trashChat(path) {
-  const fileURL = $.NSURL.fileURLWithPath(path)
-  $.NSFileManager.defaultManager.trashItemAtURLResultingItemURLError(fileURL, undefined, undefined)
-}
-
-function noArchives() {
-  return JSON.stringify({ items: [{
-    title: "No Chat Histories Found",
-    subtitle: "Archives are created when starting new conversations",
-    valid: false
-  }]})
-}
-
-function run() {
-  const archiveDir = `${envVar("alfred_workflow_data")}/archive`
-  if (!$.NSFileManager.defaultManager.fileExistsAtPath(archiveDir)) return noArchives()
-
-  const sfItems = dirContents(archiveDir)
-    .filter(file =&gt; file.endsWith(".json"))
-    .toReversed()
-    .flatMap(file =&gt; {
-      const chatContents = readChat(file)
-      const firstQuestion = chatContents.find(item =&gt; item["role"] === "user")?.["content"]
-      const lastQuestion = chatContents.toReversed().find(item =&gt; item["role"] === "user")?.["content"]
-
-      // Delete invalid chats
-      if (!firstQuestion) trashChat(file)
-
-      return {
-        type: "file",
-        title: firstQuestion,
-        subtitle: lastQuestion,
-        match: `${firstQuestion} ${lastQuestion}`,
-        variables: { replace_with_chat: file, chat_history_save: 1 },
-      }
-    })
-
-  if (sfItems.length === 0) return noArchives()
-
-  return JSON.stringify({ items: sfItems })
-}</string>
-				<key>scriptargtype</key>
-				<integer>1</integer>
-				<key>scriptfile</key>
+				<key>argument</key>
 				<string></string>
-				<key>skipuniversalaction</key>
-				<true/>
-				<key>subtext</key>
-				<string></string>
-				<key>title</key>
-				<string>Chat History</string>
-				<key>type</key>
-				<integer>7</integer>
-				<key>withspace</key>
+				<key>passthroughargument</key>
 				<false/>
+				<key>variables</key>
+				<dict>
+					<key>prompt</key>
+					<string>{query}</string>
+				</dict>
 			</dict>
 			<key>type</key>
-			<string>alfred.workflow.input.scriptfilter</string>
+			<string>alfred.workflow.utility.argument</string>
 			<key>uid</key>
-			<string>B2F04B2C-63AD-4A6D-9A81-7F333D0A075A</string>
+			<string>BE2A3D59-BE8C-4EF1-905F-524479F181FA</string>
 			<key>version</key>
-			<integer>3</integer>
+			<integer>1</integer>
 		</dict>
 	</array>
 	<key>readme</key>
@@ -992,13 +877,13 @@ Query the selected tool via keyword, [Universal Action](https://www.alfredapp.co
 
 View Chat History with ⌥↩ from the chat keyword. Each chat shows the first question as the title and the last as the subtitle.
 
-&lt;kbd&gt;↩&lt;/kbd&gt; to archive current chat and load the selected one. Older chats can be trashed with the `Delete` [Universal Action](https://www.alfredapp.com/help/features/universal-actions/). Select multiple chats with the [File Buffer](https://www.alfredapp.com/help/features/file-search/#file-buffer).</string>
+&lt;kbd&gt;↩&lt;/kbd&gt; to archive current chat and load the selected one. History chats can be trashed with the `Delete` [Universal Action](https://www.alfredapp.com/help/features/universal-actions/). Select multiple chats with the [File Buffer](https://www.alfredapp.com/help/features/file-search/#file-buffer).</string>
 	<key>uidata</key>
 	<dict>
 		<key>009F4B0B-7B7E-455F-9EA7-51334DBA92F1</key>
 		<dict>
 			<key>xpos</key>
-			<real>760</real>
+			<real>710</real>
 			<key>ypos</key>
 			<real>140</real>
 		</dict>
@@ -1007,7 +892,7 @@ View Chat History with ⌥↩ from the chat keyword. Each chat shows the first q
 			<key>note</key>
 			<string>Stop stream process</string>
 			<key>xpos</key>
-			<real>805</real>
+			<real>755</real>
 			<key>ypos</key>
 			<real>110</real>
 		</dict>
@@ -1020,17 +905,10 @@ View Chat History with ⌥↩ from the chat keyword. Each chat shows the first q
 			<key>ypos</key>
 			<real>110</real>
 		</dict>
-		<key>19467065-1FA8-4C92-9F58-797A122BE296</key>
-		<dict>
-			<key>xpos</key>
-			<real>530</real>
-			<key>ypos</key>
-			<real>245</real>
-		</dict>
 		<key>2345B220-18B0-4F70-9DD7-B7A20763FFBC</key>
 		<dict>
 			<key>xpos</key>
-			<real>1020</real>
+			<real>970</real>
 			<key>ypos</key>
 			<real>110</real>
 		</dict>
@@ -1046,30 +924,21 @@ View Chat History with ⌥↩ from the chat keyword. Each chat shows the first q
 		<key>2F3B5565-0BBD-4DC6-962B-BEF7277AC599</key>
 		<dict>
 			<key>xpos</key>
-			<real>975</real>
+			<real>925</real>
 			<key>ypos</key>
 			<real>140</real>
 		</dict>
 		<key>361EA732-1619-44FE-991A-3F0120D41C2F</key>
 		<dict>
 			<key>xpos</key>
-			<real>805</real>
+			<real>755</real>
 			<key>ypos</key>
 			<real>320</real>
-		</dict>
-		<key>3F877D5C-BA2B-4BA1-9601-2CE9D29C31B5</key>
-		<dict>
-			<key>colorindex</key>
-			<integer>9</integer>
-			<key>xpos</key>
-			<real>450</real>
-			<key>ypos</key>
-			<real>140</real>
 		</dict>
 		<key>4DB440D5-3814-4C79-9724-D19FDDDA4BEC</key>
 		<dict>
 			<key>xpos</key>
-			<real>575</real>
+			<real>515</real>
 			<key>ypos</key>
 			<real>215</real>
 		</dict>
@@ -1085,21 +954,21 @@ View Chat History with ⌥↩ from the chat keyword. Each chat shows the first q
 		<key>7497E232-BF22-4AE8-A2CA-A4BA22CC5668</key>
 		<dict>
 			<key>xpos</key>
-			<real>805</real>
+			<real>755</real>
 			<key>ypos</key>
 			<real>425</real>
 		</dict>
 		<key>7CE25BF5-0AF8-411E-8A05-244BF7CA878F</key>
 		<dict>
 			<key>xpos</key>
-			<real>1020</real>
+			<real>970</real>
 			<key>ypos</key>
 			<real>215</real>
 		</dict>
 		<key>A4782A1E-2A93-401B-9CB7-1D8770AD510E</key>
 		<dict>
 			<key>xpos</key>
-			<real>805</real>
+			<real>755</real>
 			<key>ypos</key>
 			<real>215</real>
 		</dict>
@@ -1120,9 +989,16 @@ View Chat History with ⌥↩ from the chat keyword. Each chat shows the first q
 		<key>BA834298-7386-4B4C-9E7D-E2D8542518B0</key>
 		<dict>
 			<key>xpos</key>
-			<real>975</real>
+			<real>925</real>
 			<key>ypos</key>
 			<real>245</real>
+		</dict>
+		<key>BE2A3D59-BE8C-4EF1-905F-524479F181FA</key>
+		<dict>
+			<key>xpos</key>
+			<real>235</real>
+			<key>ypos</key>
+			<real>455</real>
 		</dict>
 		<key>BF340515-39CD-47C9-965D-B1631A3BF45F</key>
 		<dict>
@@ -1343,7 +1219,7 @@ View Chat History with ⌥↩ from the chat keyword. Each chat shows the first q
 			<key>description</key>
 			<string>minutes</string>
 			<key>label</key>
-			<string>Start a new chat after</string>
+			<string>Start a New Chat After</string>
 			<key>type</key>
 			<string>slider</string>
 			<key>variable</key>
