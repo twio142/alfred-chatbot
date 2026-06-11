@@ -226,11 +226,14 @@ class Chatbot {
     writeFileSync(dest, readFileSync(this.paths.chat));
   }
 
-  formatContextPrompt(messages) {
+  formatContextPrompt(messages, query = null) {
     const body = messages.map(m =>
       `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`,
     ).join('\n\n');
-    return `The following is a record of a previous conversation. Read it as context and wait for my next message:\n\n${body}`;
+    const intro = 'The following is a record of a previous conversation.';
+    if (query)
+      return `${intro}\n\n${body}\n\nNow please respond to my latest message:\n\n${query}`;
+    return `${intro} Read it as context and wait for my next message:\n\n${body}`;
   }
 
   runBlocking(args, env) {
@@ -292,7 +295,13 @@ class Chatbot {
   start(query) {
     this.setup();
     const session = this.getSession();
-    const args = this.provider.buildArgs(query, session, this.systemFile);
+    const history = this.getHistory();
+
+    let effectiveQuery = query;
+    if (!session && history.length > 0)
+      effectiveQuery = this.formatContextPrompt(history, query);
+
+    const args = this.provider.buildArgs(effectiveQuery, session, this.systemFile);
     const env = this.provider.buildEnv(this.systemFile);
 
     writeFileSync(this.paths.stream, '', 'utf8');
@@ -303,13 +312,13 @@ class Chatbot {
     closeSync(fd);
     writeFileSync(this.paths.pid, String(child.pid));
 
-    const history = [...this.getHistory(), { role: 'user', content: query }];
-    this.saveHistory(history);
+    const newHistory = [...history, { role: 'user', content: query }];
+    this.saveHistory(newHistory);
 
     return {
       rerun: 0.5,
       variables: { streaming_now: true, stream_marker: true },
-      response: this.renderMarkdown(history),
+      response: this.renderMarkdown(newHistory),
     };
   }
 
