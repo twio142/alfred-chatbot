@@ -85,6 +85,56 @@ class GeminiProvider extends BaseProvider {
   }
 }
 
+class PiProvider extends BaseProvider {
+  name = 'pi';
+
+  get sessionDir() {
+    const slug = '--' + process.cwd().slice(1).replace(/\//g, '-') + '--';
+    return `${process.env.HOME}/.pi/agent/sessions/${slug}`;
+  }
+
+  findSessionFile(sessionId) {
+    if (!existsSync(this.sessionDir))
+      return null;
+    const match = readdirSync(this.sessionDir).find(f => f.includes(sessionId));
+    return match ? `${this.sessionDir}/${match}` : null;
+  }
+
+  findSessionLine(lines) {
+    const line = lines.find(l => l.type === 'session' && l.id);
+    return line ? { session_id: line.id } : null;
+  }
+
+  buildArgs(query, session, systemPromptFile) {
+    const args = ['--mode', 'json', '-p', query];
+    if (this.model)
+      args.push('--model', this.model);
+    if (session)
+      args.push('--session', session.session_id);
+    if (systemPromptFile && existsSync(systemPromptFile))
+      args.push('--system-prompt', readFileSync(systemPromptFile, 'utf8'));
+    args.push(...this.extraArgs);
+    return args;
+  }
+
+  buildEnv = () => process.env;
+
+  extractResponse(lines) {
+    const turnEnds = lines.filter(l => l.type === 'turn_end' && l.message?.role === 'assistant' && l.message?.stopReason === 'stop');
+    if (turnEnds.length)
+      return turnEnds.at(-1).message.content.filter(c => c.type === 'text').map(c => c.text).join('');
+    const updates = lines.filter(l => l.type === 'message_update' && l.message?.role === 'assistant' && l.message?.content?.some(c => c.type === 'text'));
+    const latest = updates.at(-1);
+    return latest?.message?.content?.filter(c => c.type === 'text').map(c => c.text).join('') || '';
+  }
+
+  extractFinishReason(lines) {
+    if (lines.some(l => l.type === 'agent_end'))
+      return 'stop';
+    return lines.some(l => l.type === 'error') ? 'error' : null;
+  }
+}
+
 class ClaudeProvider extends BaseProvider {
   name = 'claude';
 
@@ -419,7 +469,9 @@ const providerName = env('provider');
 
 const provider = providerName === 'gemini'
   ? new GeminiProvider(env('gemini_model'), parseArgs(env('gemini_options')))
-  : new ClaudeProvider(env('claude_model'), parseArgs(env('claude_options')));
+  : providerName === 'pi'
+    ? new PiProvider(env('pi_model'), parseArgs(env('pi_options')))
+    : new ClaudeProvider(env('claude_model'), parseArgs(env('claude_options')));
 
 const config = {
   dataDir: env('alfred_workflow_data'),
