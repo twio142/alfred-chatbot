@@ -89,8 +89,8 @@ class PiProvider extends BaseProvider {
   name = 'pi';
 
   get sessionDir() {
-    const slug = '--' + process.cwd().slice(1).replace(/\//g, '-') + '--';
-    return `${process.env.HOME}/.pi/agent/sessions/${slug}`;
+    const slug = `--${process.cwd().slice(1).replace(/\//g, '-')}--`;
+    return `.pi/sessions/${slug}`;
   }
 
   findSessionFile(sessionId) {
@@ -106,7 +106,7 @@ class PiProvider extends BaseProvider {
   }
 
   buildArgs(query, session, systemPromptFile) {
-    const args = ['--mode', 'json', '-p', query];
+    const args = ['--mode', 'json', '--session-dir', '.pi/sessions', '-p', query];
     if (this.model)
       args.push('--model', this.model);
     if (session)

@@ -1,5 +1,6 @@
 *.png
 /prefs.plist
 .claude/
+.pi/
 .gemini/
 .mcp.json
